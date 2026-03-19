@@ -1,4 +1,4 @@
-package com.devclass.backend.course;
+package com.devclass.backend.domain;
 
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,6 +25,9 @@ public class Course {
 
     @Column(nullable = false, length = 200)
     private String title;
+
+    @Column(length = 200)
+    private String summary;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
@@ -64,5 +67,27 @@ public class Course {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    public void update(String title, String summary, String description, String category, String level, Integer price, String thumbnailUrl) {
+        if (title != null) this.title = title;
+        if (summary != null) this.summary = summary;
+        if (description != null) this.description = description;
+        if (category != null) this.category = category;
+        if (level != null) this.level = level;
+        if (price != null) this.price = price;
+        if (thumbnailUrl != null) this.thumbnailUrl = thumbnailUrl;
+    }
+
+    public void incrementEnrollmentCount() {
+        this.enrollmentCount++;
+    }
+
+    public void decrementEnrollmentCount() {
+        this.enrollmentCount = Math.max(0, this.enrollmentCount - 1);
+    }
+
+    public void updateAverageRating(float newRating) {
+        this.averageRating = newRating;
     }
 }

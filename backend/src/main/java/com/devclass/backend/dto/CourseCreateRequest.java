@@ -1,4 +1,4 @@
-package com.devclass.backend.course.dto;
+package com.devclass.backend.dto;
 
 import lombok.Getter;
 
@@ -8,6 +8,7 @@ public class CourseCreateRequest {
     private Long instructorId;
     private String instructorName;
     private String title;
+    private String summary;
     private String description;
     private String category;
     private String level;

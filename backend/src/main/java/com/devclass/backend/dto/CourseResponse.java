@@ -1,6 +1,6 @@
-package com.devclass.backend.course.dto;
+package com.devclass.backend.dto;
 
-import com.devclass.backend.course.Course;
+import com.devclass.backend.domain.Course;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -14,6 +14,7 @@ public class CourseResponse {
     private Long instructorId;
     private String instructorName;
     private String title;
+    private String summary;
     private String description;
     private String category;
     private String level;
@@ -30,6 +31,7 @@ public class CourseResponse {
                 .instructorId(course.getInstructorId())
                 .instructorName(course.getInstructorName())
                 .title(course.getTitle())
+                .summary(course.getSummary())
                 .description(course.getDescription())
                 .category(course.getCategory())
                 .level(course.getLevel())
