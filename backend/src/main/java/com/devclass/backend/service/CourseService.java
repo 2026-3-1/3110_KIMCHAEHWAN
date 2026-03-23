@@ -40,7 +40,7 @@ public class CourseService {
     }
 
     @Transactional(readOnly = true)
-    public CourseListResponse getList(String category, String level, String sort, int page, int size) {
+    public CourseListResponse getList(String keyword, String category, String level, String sort, int page, int size) {
         Sort sortOrder = switch (sort) {
             case "popular"    -> Sort.by(Sort.Direction.DESC, "enrollmentCount");
             case "rating"     -> Sort.by(Sort.Direction.DESC, "averageRating");
@@ -50,17 +50,7 @@ public class CourseService {
         };
 
         Pageable pageable = PageRequest.of(page, size, sortOrder);
-
-        Page<Course> courses;
-        if (category != null && level != null) {
-            courses = courseRepository.findByCategoryAndLevel(category, level, pageable);
-        } else if (category != null) {
-            courses = courseRepository.findByCategory(category, pageable);
-        } else if (level != null) {
-            courses = courseRepository.findByLevel(level, pageable);
-        } else {
-            courses = courseRepository.findAll(pageable);
-        }
+        Page<Course> courses = courseRepository.search(keyword, category, level, pageable);
 
         return CourseListResponse.builder()
                 .courses(courses.map(CourseResponse::from).getContent())
@@ -99,6 +89,10 @@ public class CourseService {
 
         if (!course.getInstructorId().equals(instructorId)) {
             throw new BusinessException(ErrorCode.FORBIDDEN);
+        }
+
+        if (course.getEnrollmentCount() > 0) {
+            throw new BusinessException(ErrorCode.COURSE_HAS_ENROLLMENTS);
         }
 
         courseRepository.delete(course);

@@ -1,0 +1,359 @@
+import { useState } from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { MOCK_COURSES, MOCK_REVIEWS } from '../data/mockData';
+
+const LEVEL_LABEL = { beginner: '입문', intermediate: '중급', advanced: '고급' };
+
+function StarDisplay({ value, size = 'sm' }) {
+  return (
+    <span className={`flex gap-0.5 ${size === 'lg' ? 'text-2xl' : 'text-sm'}`}>
+      {[1, 2, 3, 4, 5].map((s) => (
+        <span key={s} className={s <= value ? 'text-yellow-400' : 'text-gray-200'}>★</span>
+      ))}
+    </span>
+  );
+}
+
+function StarInput({ value, onChange }) {
+  const [hovered, setHovered] = useState(0);
+  return (
+    <span className="flex gap-1">
+      {[1, 2, 3, 4, 5].map((s) => (
+        <button
+          key={s}
+          type="button"
+          onMouseEnter={() => setHovered(s)}
+          onMouseLeave={() => setHovered(0)}
+          onClick={() => onChange(s)}
+          className={`text-2xl transition-colors ${s <= (hovered || value) ? 'text-yellow-400' : 'text-gray-200'}`}
+        >
+          ★
+        </button>
+      ))}
+    </span>
+  );
+}
+
+function RatingBar({ star, count, total }) {
+  const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+  return (
+    <div className="flex items-center gap-3 text-sm">
+      <span className="text-gray-500 w-3">{star}</span>
+      <span className="text-yellow-400 text-xs">★</span>
+      <div className="flex-1 bg-gray-100 rounded-full h-2">
+        <div className="bg-yellow-400 h-2 rounded-full transition-all" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="text-gray-400 text-xs w-8">{pct}%</span>
+    </div>
+  );
+}
+
+export default function CourseDetailPage() {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const course = MOCK_COURSES.find((c) => c.id === Number(id));
+  const reviews = MOCK_REVIEWS.filter((r) => r.courseId === Number(id));
+
+  // 수강 신청 UI 상태
+  const [enrolled, setEnrolled] = useState(false);
+  const [enrollAnimating, setEnrollAnimating] = useState(false);
+
+  // 리뷰 작성 UI 상태
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewContent, setReviewContent] = useState('');
+  const [localReviews, setLocalReviews] = useState(reviews);
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+
+  // 삭제 모달
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  if (!course) {
+    return (
+      <div className="text-center py-24 text-gray-400">
+        <div className="text-5xl mb-4">😕</div>
+        <p className="text-lg">강의를 찾을 수 없습니다.</p>
+        <Link to="/courses" className="mt-4 inline-block text-indigo-600 hover:underline text-sm">목록으로 돌아가기</Link>
+      </div>
+    );
+  }
+
+  const avgRating = localReviews.length > 0
+    ? (localReviews.reduce((s, r) => s + r.rating, 0) / localReviews.length).toFixed(1)
+    : '-';
+
+  const ratingDist = [5, 4, 3, 2, 1].map((star) => ({
+    star,
+    count: localReviews.filter((r) => r.rating === star).length,
+  }));
+
+  const handleEnroll = () => {
+    if (enrolled) return;
+    setEnrollAnimating(true);
+    setTimeout(() => { setEnrolled(true); setEnrollAnimating(false); }, 800);
+  };
+
+  const handleReviewSubmit = (e) => {
+    e.preventDefault();
+    if (!reviewContent.trim()) return;
+    const newReview = {
+      id: Date.now(),
+      courseId: course.id,
+      studentId: 999,
+      rating: reviewRating,
+      content: reviewContent.trim(),
+      createdAt: new Date().toISOString(),
+    };
+    setLocalReviews((prev) => [newReview, ...prev]);
+    setReviewContent('');
+    setReviewRating(5);
+    setReviewSubmitted(true);
+    setTimeout(() => setReviewSubmitted(false), 3000);
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* 브레드크럼 */}
+      <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+        <Link to="/" className="hover:text-indigo-600">홈</Link>
+        <span>/</span>
+        <Link to="/courses" className="hover:text-indigo-600">강의 목록</Link>
+        <span>/</span>
+        <span className="text-gray-700 truncate max-w-xs">{course.title}</span>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-8">
+        {/* 왼쪽 */}
+        <div className="flex-1 min-w-0">
+          {/* 카테고리/레벨 뱃지 */}
+          <div className="flex items-center gap-2 mb-3">
+            <span className="bg-indigo-100 text-indigo-700 text-xs font-semibold px-3 py-1 rounded-full">
+              {course.category}
+            </span>
+            <span className="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">
+              {LEVEL_LABEL[course.level] ?? course.level}
+            </span>
+          </div>
+
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-3 leading-snug">{course.title}</h1>
+          <p className="text-gray-500 text-base mb-4">{course.summary}</p>
+
+          {/* 강사 + 통계 */}
+          <div className="flex flex-wrap items-center gap-4 text-sm mb-6">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 font-bold text-xs">
+                {course.instructorName[0]}
+              </div>
+              <span className="font-medium text-gray-800">{course.instructorName}</span>
+            </div>
+            <div className="flex items-center gap-1 text-yellow-500">
+              <span className="font-bold text-gray-800">{avgRating}</span>
+              <StarDisplay value={Math.round(Number(avgRating))} />
+              <span className="text-gray-400">({localReviews.length}개)</span>
+            </div>
+            <span className="text-gray-400">수강생 {course.enrollmentCount.toLocaleString()}명</span>
+          </div>
+
+          {/* 썸네일 */}
+          {course.thumbnailUrl && (
+            <div className="rounded-2xl overflow-hidden mb-8 shadow-sm">
+              <img src={course.thumbnailUrl} alt={course.title} className="w-full object-cover max-h-96" />
+            </div>
+          )}
+
+          {/* 강의 소개 */}
+          <div className="mb-10">
+            <h2 className="text-lg font-bold text-gray-900 mb-4 pb-2 border-b border-gray-100">강의 소개</h2>
+            <p className="text-gray-700 leading-relaxed whitespace-pre-line">{course.description}</p>
+          </div>
+
+          {/* 강사 정보 */}
+          <div className="mb-10 p-5 bg-gray-50 rounded-2xl border border-gray-100">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">강사 소개</h2>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-indigo-200 rounded-full flex items-center justify-center text-indigo-700 font-bold text-xl shrink-0">
+                {course.instructorName[0]}
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">{course.instructorName}</p>
+                <p className="text-sm text-gray-500 mt-1">DevClass 인증 강사 · {course.category} 전문</p>
+                <div className="flex gap-3 text-xs text-gray-400 mt-2">
+                  <span>강의 3개</span>
+                  <span>수강생 {course.enrollmentCount.toLocaleString()}명</span>
+                  <span>평점 {avgRating}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 리뷰 섹션 */}
+          <div>
+            <h2 className="text-lg font-bold text-gray-900 mb-6 pb-2 border-b border-gray-100">
+              수강생 리뷰
+            </h2>
+
+            {localReviews.length > 0 && (
+              <div className="flex gap-8 mb-8 p-5 bg-yellow-50 rounded-2xl border border-yellow-100">
+                <div className="text-center shrink-0">
+                  <div className="text-5xl font-bold text-gray-900">{avgRating}</div>
+                  <StarDisplay value={Math.round(Number(avgRating))} size="lg" />
+                  <div className="text-xs text-gray-400 mt-2">{localReviews.length}개 리뷰</div>
+                </div>
+                <div className="flex-1 space-y-2">
+                  {ratingDist.map((d) => (
+                    <RatingBar key={d.star} star={d.star} count={d.count} total={localReviews.length} />
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="space-y-4 mb-8">
+              {localReviews.map((review) => (
+                <div key={review.id} className="p-4 bg-white border border-gray-100 rounded-xl hover:shadow-sm transition-shadow">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 text-xs font-medium">
+                        {review.studentId % 100}
+                      </div>
+                      <span className="text-sm font-medium text-gray-800">수강생</span>
+                      <StarDisplay value={review.rating} />
+                    </div>
+                    <span className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString()}</span>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">{review.content}</p>
+                </div>
+              ))}
+              {localReviews.length === 0 && (
+                <div className="text-center py-10 text-gray-400">
+                  <p className="text-3xl mb-2">💬</p>
+                  <p>아직 리뷰가 없습니다. 첫 번째 리뷰를 남겨보세요!</p>
+                </div>
+              )}
+            </div>
+
+            {/* 리뷰 작성 폼 */}
+            <div className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+              <h3 className="font-bold text-gray-900 mb-4">리뷰 작성</h3>
+              <form onSubmit={handleReviewSubmit} className="space-y-4">
+                <div>
+                  <p className="text-sm text-gray-600 mb-2">별점</p>
+                  <StarInput value={reviewRating} onChange={setReviewRating} />
+                </div>
+                <textarea
+                  value={reviewContent}
+                  onChange={(e) => setReviewContent(e.target.value)}
+                  placeholder="이 강의에 대한 솔직한 후기를 남겨주세요..."
+                  rows={3}
+                  className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 resize-none bg-white"
+                />
+                {reviewSubmitted && (
+                  <p className="text-green-600 text-sm">✓ 리뷰가 등록되었습니다!</p>
+                )}
+                <button
+                  type="submit"
+                  disabled={!reviewContent.trim()}
+                  className="bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-medium hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+                >
+                  리뷰 등록
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {/* 오른쪽: 수강 신청 카드 */}
+        <div className="w-full lg:w-80 shrink-0">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 sticky top-24 shadow-lg">
+            {course.thumbnailUrl && (
+              <img
+                src={course.thumbnailUrl}
+                alt=""
+                className="w-full aspect-video object-cover rounded-xl mb-4"
+              />
+            )}
+            <div className="text-3xl font-bold text-gray-900 mb-1">
+              {course.price === 0 ? (
+                <span className="text-indigo-600">무료</span>
+              ) : (
+                `${course.price.toLocaleString()}원`
+              )}
+            </div>
+            <p className="text-sm text-gray-400 mb-5">수강생 {course.enrollmentCount.toLocaleString()}명 수강 중</p>
+
+            <button
+              onClick={handleEnroll}
+              disabled={enrolled || enrollAnimating}
+              className={`w-full py-3.5 rounded-xl font-bold text-base transition-all ${
+                enrolled
+                  ? 'bg-green-500 text-white cursor-default'
+                  : enrollAnimating
+                  ? 'bg-indigo-400 text-white'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'
+              }`}
+            >
+              {enrolled ? '✓ 수강 신청 완료' : enrollAnimating ? '처리 중...' : '수강 신청하기'}
+            </button>
+
+            {enrolled && (
+              <p className="text-center text-sm text-green-600 mt-2">내 수강 목록에서 확인하세요.</p>
+            )}
+
+            <div className="border-t border-gray-100 mt-5 pt-5 space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">카테고리</span>
+                <span className="font-medium text-gray-800">{course.category}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">난이도</span>
+                <span className="font-medium text-gray-800">{LEVEL_LABEL[course.level]}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-500">강사</span>
+                <span className="font-medium text-gray-800">{course.instructorName}</span>
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 mt-5 pt-5 flex gap-2">
+              <Link
+                to={`/courses/${course.id}/edit`}
+                className="flex-1 text-center border border-gray-300 text-gray-600 py-2 rounded-lg text-sm hover:bg-gray-50 transition-colors"
+              >
+                강의 수정
+              </Link>
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="flex-1 text-center border border-red-200 text-red-500 py-2 rounded-lg text-sm hover:bg-red-50 transition-colors"
+              >
+                강의 삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 삭제 확인 모달 */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl p-6 w-80 shadow-2xl">
+            <div className="text-3xl mb-3 text-center">🗑️</div>
+            <h3 className="font-bold text-gray-900 text-center mb-2">강의를 삭제하시겠습니까?</h3>
+            <p className="text-sm text-gray-500 text-center mb-6">이 작업은 되돌릴 수 없습니다.</p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 border border-gray-300 text-gray-600 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-50"
+              >
+                취소
+              </button>
+              <button
+                onClick={() => { setShowDeleteModal(false); navigate('/courses'); }}
+                className="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-red-600"
+              >
+                삭제
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

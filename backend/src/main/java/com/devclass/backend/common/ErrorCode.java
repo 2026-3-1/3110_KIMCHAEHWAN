@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 public enum ErrorCode {
 
     COURSE_NOT_FOUND(HttpStatus.NOT_FOUND, "강의를 찾을 수 없습니다.", "COURSE_NOT_FOUND"),
+    COURSE_HAS_ENROLLMENTS(HttpStatus.CONFLICT, "수강생이 있는 강의는 삭제할 수 없습니다.", "COURSE_HAS_ENROLLMENTS"),
     ENROLLMENT_DUPLICATED(HttpStatus.CONFLICT, "이미 수강 신청한 강의입니다.", "ENROLLMENT_DUPLICATED"),
     ENROLLMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "수강 내역을 찾을 수 없습니다.", "ENROLLMENT_NOT_FOUND"),
     REVIEW_DUPLICATED(HttpStatus.CONFLICT, "이미 리뷰를 작성하셨습니다.", "REVIEW_DUPLICATED"),

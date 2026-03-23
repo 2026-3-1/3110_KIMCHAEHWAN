@@ -31,13 +31,14 @@ public class CourseController {
     @GetMapping
     @Operation(summary = "강의 목록 조회")
     public ResponseEntity<ApiResponse<CourseListResponse>> getList(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String level,
             @RequestParam(defaultValue = "newest") String sort,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "12") int size
     ) {
-        return ResponseEntity.ok(ApiResponse.success(courseService.getList(category, level, sort, page, size)));
+        return ResponseEntity.ok(ApiResponse.success(courseService.getList(keyword, category, level, sort, page, size)));
     }
 
     @GetMapping("/{courseId}")
