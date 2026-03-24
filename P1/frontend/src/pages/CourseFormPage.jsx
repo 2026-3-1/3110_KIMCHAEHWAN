@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MOCK_COURSES } from '../data/mockData';
+import { getCourse, createCourse, updateCourse } from '../api/courses';
 
 const CATEGORIES = ['알고리즘/자료구조', '웹 개발', '앱 개발', '데이터베이스', 'AI/데이터', 'DevOps'];
 const LEVELS = [
@@ -12,6 +12,8 @@ const EMPTY = {
   title: '', summary: '', description: '',
   category: CATEGORIES[0], level: 'beginner', price: '', thumbnailUrl: '',
 };
+const INSTRUCTOR_ID = 1;
+const INSTRUCTOR_NAME = '강사';
 
 export default function CourseFormPage() {
   const { id } = useParams();
@@ -23,8 +25,12 @@ export default function CourseFormPage() {
 
   useEffect(() => {
     if (!isEdit) return;
-    const c = MOCK_COURSES.find((c) => c.id === Number(id));
-    if (c) setForm({ ...c, price: String(c.price) });
+    getCourse(id)
+      .then((res) => {
+        const c = res.data.data;
+        setForm({ ...c, price: String(c.price) });
+      })
+      .catch(() => setError('강의 정보를 불러올 수 없습니다.'));
   }, [id, isEdit]);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -34,9 +40,24 @@ export default function CourseFormPage() {
     if (!form.title.trim()) { setError('강의명을 입력해주세요.'); return; }
     setError('');
     setSubmitted(true);
-    setTimeout(() => {
-      navigate(isEdit ? `/courses/${id}` : '/courses');
-    }, 1000);
+
+    const payload = {
+      ...form,
+      price: Number(form.price) || 0,
+      instructorId: INSTRUCTOR_ID,
+      instructorName: form.instructorName || INSTRUCTOR_NAME,
+    };
+
+    const request = isEdit
+      ? updateCourse(id, payload)
+      : createCourse(payload);
+
+    request
+      .then(() => navigate(isEdit ? `/courses/${id}` : '/courses'))
+      .catch(() => {
+        setError('저장에 실패했습니다. 다시 시도해주세요.');
+        setSubmitted(false);
+      });
   };
 
   return (
@@ -163,12 +184,6 @@ export default function CourseFormPage() {
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">
             {error}
-          </div>
-        )}
-
-        {submitted && (
-          <div className="bg-green-50 border border-green-200 text-green-700 text-sm px-4 py-3 rounded-xl">
-            ✓ {isEdit ? '강의가 수정되었습니다!' : '강의가 등록되었습니다!'} 잠시 후 이동합니다...
           </div>
         )}
 

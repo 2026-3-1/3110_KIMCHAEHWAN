@@ -1,13 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import CourseCard from '../components/CourseCard';
-import { CATEGORIES, MOCK_COURSES } from '../data/mockData';
-
-const newestCourses = [...MOCK_COURSES].slice(0, 4);
-const popularCourses = [...MOCK_COURSES].sort((a, b) => b.enrollmentCount - a.enrollmentCount).slice(0, 4);
+import { CATEGORIES } from '../data/mockData';
+import { getCourses } from '../api/courses';
 
 export default function MainPage() {
   const navigate = useNavigate();
+  const [newestCourses, setNewestCourses] = useState([]);
+  const [popularCourses, setPopularCourses] = useState([]);
+
+  useEffect(() => {
+    getCourses({ sort: 'newest', size: 4 })
+      .then((res) => setNewestCourses(res.data.data.courses))
+      .catch(() => {});
+    getCourses({ sort: 'popular', size: 4 })
+      .then((res) => setPopularCourses(res.data.data.courses))
+      .catch(() => {});
+  }, []);
 
   return (
     <div>

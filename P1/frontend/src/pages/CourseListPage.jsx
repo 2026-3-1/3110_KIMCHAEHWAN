@@ -1,7 +1,7 @@
-import { useState, useMemo } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import CourseCard from '../components/CourseCard';
-import { MOCK_COURSES } from '../data/mockData';
+import { getCourses } from '../api/courses';
 
 const ALL_CATEGORIES = ['전체', '알고리즘/자료구조', '웹 개발', '앱 개발', '데이터베이스', 'AI/데이터', 'DevOps'];
 const LEVELS = [
@@ -25,6 +25,10 @@ export default function CourseListPage() {
   const keyword = searchParams.get('keyword') ?? '';
   const page = parseInt(searchParams.get('page') ?? '0');
 
+  const [courses, setCourses] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [loading, setLoading] = useState(false);
+
   const setParam = (key, value) => {
     const next = new URLSearchParams(searchParams);
     if (value) next.set(key, value); else next.delete(key);
@@ -37,20 +41,18 @@ export default function CourseListPage() {
     setSearchParams(next);
   };
 
-  const filtered = useMemo(() => {
-    let list = [...MOCK_COURSES];
-    if (category) list = list.filter((c) => c.category === category);
-    if (level) list = list.filter((c) => c.level === level);
-    if (keyword) list = list.filter((c) =>
-      c.title.includes(keyword) || c.summary.includes(keyword) || c.instructorName.includes(keyword)
-    );
-    if (sort === 'popular') list.sort((a, b) => b.enrollmentCount - a.enrollmentCount);
-    else if (sort === 'rating') list.sort((a, b) => b.averageRating - a.averageRating);
-    return list;
-  }, [category, level, keyword, sort]);
+  useEffect(() => {
+    setLoading(true);
+    getCourses({ keyword: keyword || undefined, category: category || undefined, level: level || undefined, sort, page, size: SIZE })
+      .then((res) => {
+        setCourses(res.data.data.courses);
+        setTotalCount(res.data.data.totalCount);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [keyword, category, level, sort, page]);
 
-  const totalPages = Math.ceil(filtered.length / SIZE);
-  const paged = filtered.slice(page * SIZE, page * SIZE + SIZE);
+  const totalPages = Math.ceil(totalCount / SIZE);
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -59,7 +61,7 @@ export default function CourseListPage() {
         <div className="mb-5 p-4 bg-indigo-50 rounded-xl border border-indigo-100">
           <p className="text-gray-700 text-sm">
             <span className="font-semibold text-indigo-700">"{keyword}"</span> 검색 결과{' '}
-            <span className="text-gray-500">({filtered.length}개)</span>
+            <span className="text-gray-500">({totalCount}개)</span>
           </p>
         </div>
       )}
@@ -99,7 +101,7 @@ export default function CourseListPage() {
           ))}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-400">총 {filtered.length}개</span>
+          <span className="text-sm text-gray-400">총 {totalCount}개</span>
           <select
             value={sort}
             onChange={(e) => setParam('sort', e.target.value)}
@@ -113,9 +115,13 @@ export default function CourseListPage() {
       </div>
 
       {/* 강의 그리드 */}
-      {paged.length > 0 ? (
+      {loading ? (
+        <div className="text-center py-24 text-gray-400">
+          <p className="text-lg">불러오는 중...</p>
+        </div>
+      ) : courses.length > 0 ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-          {paged.map((course) => (
+          {courses.map((course) => (
             <CourseCard key={course.id} course={course} />
           ))}
         </div>

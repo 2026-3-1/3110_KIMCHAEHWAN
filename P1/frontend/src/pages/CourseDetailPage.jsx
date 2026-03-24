@@ -1,8 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MOCK_COURSES, MOCK_REVIEWS } from '../data/mockData';
+import { getCourse, deleteCourse } from '../api/courses';
+import { getReviews, createReview } from '../api/reviews';
+import { createEnrollment } from '../api/enrollments';
 
 const LEVEL_LABEL = { beginner: '입문', intermediate: '중급', advanced: '고급' };
+const STUDENT_ID = 1;
 
 function StarDisplay({ value, size = 'sm' }) {
   return (
@@ -51,8 +54,11 @@ function RatingBar({ star, count, total }) {
 export default function CourseDetailPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const course = MOCK_COURSES.find((c) => c.id === Number(id));
-  const reviews = MOCK_REVIEWS.filter((r) => r.courseId === Number(id));
+
+  const [course, setCourse] = useState(null);
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
   // 수강 신청 UI 상태
   const [enrolled, setEnrolled] = useState(false);
@@ -61,13 +67,34 @@ export default function CourseDetailPage() {
   // 리뷰 작성 UI 상태
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewContent, setReviewContent] = useState('');
-  const [localReviews, setLocalReviews] = useState(reviews);
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
 
   // 삭제 모달
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
-  if (!course) {
+  useEffect(() => {
+    setLoading(true);
+    Promise.all([
+      getCourse(id),
+      getReviews(id),
+    ])
+      .then(([courseRes, reviewsRes]) => {
+        setCourse(courseRes.data.data);
+        setReviews(reviewsRes.data.data);
+      })
+      .catch(() => setNotFound(true))
+      .finally(() => setLoading(false));
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="text-center py-24 text-gray-400">
+        <p className="text-lg">불러오는 중...</p>
+      </div>
+    );
+  }
+
+  if (notFound || !course) {
     return (
       <div className="text-center py-24 text-gray-400">
         <div className="text-5xl mb-4">😕</div>
@@ -77,37 +104,41 @@ export default function CourseDetailPage() {
     );
   }
 
-  const avgRating = localReviews.length > 0
-    ? (localReviews.reduce((s, r) => s + r.rating, 0) / localReviews.length).toFixed(1)
-    : '-';
+  const avgRating = reviews.length > 0
+    ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
+    : course.averageRating?.toFixed(1) ?? '-';
 
   const ratingDist = [5, 4, 3, 2, 1].map((star) => ({
     star,
-    count: localReviews.filter((r) => r.rating === star).length,
+    count: reviews.filter((r) => r.rating === star).length,
   }));
 
   const handleEnroll = () => {
-    if (enrolled) return;
+    if (enrolled || enrollAnimating) return;
     setEnrollAnimating(true);
-    setTimeout(() => { setEnrolled(true); setEnrollAnimating(false); }, 800);
+    createEnrollment({ studentId: STUDENT_ID, courseId: course.id })
+      .then(() => { setEnrolled(true); setEnrollAnimating(false); })
+      .catch(() => { setEnrollAnimating(false); alert('수강 신청에 실패했습니다.'); });
   };
 
   const handleReviewSubmit = (e) => {
     e.preventDefault();
     if (!reviewContent.trim()) return;
-    const newReview = {
-      id: Date.now(),
-      courseId: course.id,
-      studentId: 999,
-      rating: reviewRating,
-      content: reviewContent.trim(),
-      createdAt: new Date().toISOString(),
-    };
-    setLocalReviews((prev) => [newReview, ...prev]);
-    setReviewContent('');
-    setReviewRating(5);
-    setReviewSubmitted(true);
-    setTimeout(() => setReviewSubmitted(false), 3000);
+    createReview(course.id, { studentId: STUDENT_ID, rating: reviewRating, content: reviewContent.trim() })
+      .then((res) => {
+        setReviews((prev) => [res.data.data, ...prev]);
+        setReviewContent('');
+        setReviewRating(5);
+        setReviewSubmitted(true);
+        setTimeout(() => setReviewSubmitted(false), 3000);
+      })
+      .catch(() => alert('리뷰 등록에 실패했습니다.'));
+  };
+
+  const handleDelete = () => {
+    deleteCourse(course.id, course.instructorId)
+      .then(() => { setShowDeleteModal(false); navigate('/courses'); })
+      .catch(() => { setShowDeleteModal(false); alert('강의 삭제에 실패했습니다.'); });
   };
 
   return (
@@ -148,9 +179,9 @@ export default function CourseDetailPage() {
             <div className="flex items-center gap-1 text-yellow-500">
               <span className="font-bold text-gray-800">{avgRating}</span>
               <StarDisplay value={Math.round(Number(avgRating))} />
-              <span className="text-gray-400">({localReviews.length}개)</span>
+              <span className="text-gray-400">({reviews.length}개)</span>
             </div>
-            <span className="text-gray-400">수강생 {course.enrollmentCount.toLocaleString()}명</span>
+            <span className="text-gray-400">수강생 {course.enrollmentCount?.toLocaleString()}명</span>
           </div>
 
           {/* 썸네일 */}
@@ -177,8 +208,7 @@ export default function CourseDetailPage() {
                 <p className="font-semibold text-gray-900">{course.instructorName}</p>
                 <p className="text-sm text-gray-500 mt-1">DevClass 인증 강사 · {course.category} 전문</p>
                 <div className="flex gap-3 text-xs text-gray-400 mt-2">
-                  <span>강의 3개</span>
-                  <span>수강생 {course.enrollmentCount.toLocaleString()}명</span>
+                  <span>수강생 {course.enrollmentCount?.toLocaleString()}명</span>
                   <span>평점 {avgRating}</span>
                 </div>
               </div>
@@ -191,23 +221,23 @@ export default function CourseDetailPage() {
               수강생 리뷰
             </h2>
 
-            {localReviews.length > 0 && (
+            {reviews.length > 0 && (
               <div className="flex gap-8 mb-8 p-5 bg-yellow-50 rounded-2xl border border-yellow-100">
                 <div className="text-center shrink-0">
                   <div className="text-5xl font-bold text-gray-900">{avgRating}</div>
                   <StarDisplay value={Math.round(Number(avgRating))} size="lg" />
-                  <div className="text-xs text-gray-400 mt-2">{localReviews.length}개 리뷰</div>
+                  <div className="text-xs text-gray-400 mt-2">{reviews.length}개 리뷰</div>
                 </div>
                 <div className="flex-1 space-y-2">
                   {ratingDist.map((d) => (
-                    <RatingBar key={d.star} star={d.star} count={d.count} total={localReviews.length} />
+                    <RatingBar key={d.star} star={d.star} count={d.count} total={reviews.length} />
                   ))}
                 </div>
               </div>
             )}
 
             <div className="space-y-4 mb-8">
-              {localReviews.map((review) => (
+              {reviews.map((review) => (
                 <div key={review.id} className="p-4 bg-white border border-gray-100 rounded-xl hover:shadow-sm transition-shadow">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -222,7 +252,7 @@ export default function CourseDetailPage() {
                   <p className="text-sm text-gray-700 leading-relaxed">{review.content}</p>
                 </div>
               ))}
-              {localReviews.length === 0 && (
+              {reviews.length === 0 && (
                 <div className="text-center py-10 text-gray-400">
                   <p className="text-3xl mb-2">💬</p>
                   <p>아직 리뷰가 없습니다. 첫 번째 리뷰를 남겨보세요!</p>
@@ -274,10 +304,10 @@ export default function CourseDetailPage() {
               {course.price === 0 ? (
                 <span className="text-indigo-600">무료</span>
               ) : (
-                `${course.price.toLocaleString()}원`
+                `${course.price?.toLocaleString()}원`
               )}
             </div>
-            <p className="text-sm text-gray-400 mb-5">수강생 {course.enrollmentCount.toLocaleString()}명 수강 중</p>
+            <p className="text-sm text-gray-400 mb-5">수강생 {course.enrollmentCount?.toLocaleString()}명 수강 중</p>
 
             <button
               onClick={handleEnroll}
@@ -345,7 +375,7 @@ export default function CourseDetailPage() {
                 취소
               </button>
               <button
-                onClick={() => { setShowDeleteModal(false); navigate('/courses'); }}
+                onClick={handleDelete}
                 className="flex-1 bg-red-500 text-white py-2.5 rounded-xl text-sm font-medium hover:bg-red-600"
               >
                 삭제

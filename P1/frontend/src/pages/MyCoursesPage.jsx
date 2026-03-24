@@ -1,25 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { MOCK_COURSES, MOCK_ENROLLMENTS } from '../data/mockData';
+import { getEnrollmentsByStudent, deleteEnrollment } from '../api/enrollments';
+import { getCourse } from '../api/courses';
 
 const LEVEL_LABEL = { beginner: '입문', intermediate: '중급', advanced: '고급' };
+const STUDENT_ID = 1;
 
 export default function MyCoursesPage() {
-  const [enrollments, setEnrollments] = useState(
-    MOCK_ENROLLMENTS.map((e) => ({
-      ...e,
-      course: MOCK_COURSES.find((c) => c.id === e.courseId),
-    }))
-  );
+  const [enrollments, setEnrollments] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [cancelConfirm, setCancelConfirm] = useState(null);
   const [cancelledMsg, setCancelledMsg] = useState('');
 
+  useEffect(() => {
+    setLoading(true);
+    getEnrollmentsByStudent(STUDENT_ID)
+      .then(async (res) => {
+        const list = res.data.data;
+        const withCourses = await Promise.all(
+          list.map((e) =>
+            getCourse(e.courseId)
+              .then((cr) => ({ ...e, course: cr.data.data }))
+              .catch(() => ({ ...e, course: null }))
+          )
+        );
+        setEnrollments(withCourses);
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
   const handleCancel = (enrollmentId) => {
-    setEnrollments((prev) => prev.filter((e) => e.id !== enrollmentId));
-    setCancelConfirm(null);
-    setCancelledMsg('수강이 취소되었습니다.');
-    setTimeout(() => setCancelledMsg(''), 3000);
+    deleteEnrollment(enrollmentId)
+      .then(() => {
+        setEnrollments((prev) => prev.filter((e) => e.id !== enrollmentId));
+        setCancelConfirm(null);
+        setCancelledMsg('수강이 취소되었습니다.');
+        setTimeout(() => setCancelledMsg(''), 3000);
+      })
+      .catch(() => {
+        setCancelConfirm(null);
+        alert('수강 취소에 실패했습니다.');
+      });
   };
+
+  if (loading) {
+    return (
+      <div className="text-center py-24 text-gray-400">
+        <p className="text-lg">불러오는 중...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-10">
@@ -87,7 +118,7 @@ export default function MyCoursesPage() {
                   <div className="flex items-center gap-3 mt-2">
                     <div className="flex items-center gap-1 text-xs text-gray-500">
                       <span className="text-yellow-400">★</span>
-                      <span>{course.averageRating.toFixed(1)}</span>
+                      <span>{course.averageRating?.toFixed(1)}</span>
                     </div>
                     <span className="text-xs text-gray-400">
                       수강 신청일: {new Date(enrollment.enrolledAt).toLocaleDateString()}
