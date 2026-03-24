@@ -7,6 +7,7 @@ import com.devclass.backend.domain.Review;
 import com.devclass.backend.dto.ReviewCreateRequest;
 import com.devclass.backend.dto.ReviewResponse;
 import com.devclass.backend.repository.CourseRepository;
+import com.devclass.backend.repository.EnrollmentRepository;
 import com.devclass.backend.repository.ReviewRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ public class ReviewService {
 
     private final ReviewRepository reviewRepository;
     private final CourseRepository courseRepository;
+    private final EnrollmentRepository enrollmentRepository;
 
     @Transactional(readOnly = true)
     public List<ReviewResponse> getList(Long courseId) {
@@ -35,6 +37,10 @@ public class ReviewService {
     public ReviewResponse create(Long courseId, ReviewCreateRequest request) {
         Course course = courseRepository.findById(courseId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.COURSE_NOT_FOUND));
+
+        if (!enrollmentRepository.existsByStudentIdAndCourseId(request.getStudentId(), courseId)) {
+            throw new BusinessException(ErrorCode.REVIEW_NOT_ENROLLED);
+        }
 
         if (reviewRepository.existsByStudentIdAndCourseId(request.getStudentId(), courseId)) {
             throw new BusinessException(ErrorCode.REVIEW_DUPLICATED);
