@@ -46,9 +46,9 @@ export default function MainPage() {
             </Link>
           </div>
           <div className="flex gap-8 mt-12 text-indigo-100 text-sm">
-            <div><span className="text-2xl font-bold text-white">8+</span><br />강의</div>
-            <div><span className="text-2xl font-bold text-white">13K+</span><br />수강생</div>
-            <div><span className="text-2xl font-bold text-white">4.7</span><br />평균 별점</div>
+            <div><span className="text-2xl font-bold text-white">999999+</span><br />강의</div>
+            <div><span className="text-2xl font-bold text-white">googol+</span><br />수강생</div>
+            <div><span className="text-2xl font-bold text-white">5</span><br />평균 별점</div>
           </div>
         </div>
       </section>
