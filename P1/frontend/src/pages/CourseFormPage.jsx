@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getCourse, createCourse, updateCourse } from '../api/courses';
 
@@ -10,7 +10,7 @@ const LEVELS = [
 ];
 const EMPTY = {
   title: '', summary: '', description: '',
-  category: CATEGORIES[0], level: 'beginner', price: '', thumbnailUrl: '', videoUrl: '',
+  category: CATEGORIES[0], level: 'beginner', price: '', thumbnailUrl: '',
 };
 const INSTRUCTOR_ID = 1;
 const INSTRUCTOR_NAME = '강사';
@@ -20,8 +20,10 @@ export default function CourseFormPage() {
   const navigate = useNavigate();
   const isEdit = Boolean(id);
   const [form, setForm] = useState(EMPTY);
+  const [videoFile, setVideoFile] = useState(null);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const videoInputRef = useRef(null);
 
   useEffect(() => {
     if (!isEdit) return;
@@ -34,6 +36,11 @@ export default function CourseFormPage() {
   }, [id, isEdit]);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
+
+  const handleVideoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) setVideoFile(file);
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -50,7 +57,7 @@ export default function CourseFormPage() {
 
     const request = isEdit
       ? updateCourse(id, payload)
-      : createCourse(payload);
+      : createCourse(payload, videoFile);
 
     request
       .then(() => navigate(isEdit ? `/courses/${id}` : '/courses'))
@@ -181,16 +188,44 @@ export default function CourseFormPage() {
           )}
         </div>
 
-        {/* 영상 URL */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">영상 URL</label>
-          <input
-            value={form.videoUrl}
-            onChange={set('videoUrl')}
-            placeholder="https://www.youtube.com/watch?v=..."
-            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
-          />
-        </div>
+        {/* 강의 영상 업로드 (등록 시만) */}
+        {!isEdit && (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">강의 영상</label>
+            <input
+              ref={videoInputRef}
+              type="file"
+              accept="video/*"
+              onChange={handleVideoChange}
+              className="hidden"
+            />
+            <div
+              onClick={() => videoInputRef.current.click()}
+              className={`w-full border-2 border-dashed rounded-xl px-4 py-8 text-center cursor-pointer transition-colors ${
+                videoFile
+                  ? 'border-indigo-400 bg-indigo-50'
+                  : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'
+              }`}
+            >
+              {videoFile ? (
+                <div>
+                  <div className="text-3xl mb-2">🎬</div>
+                  <p className="text-sm font-medium text-indigo-700">{videoFile.name}</p>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {(videoFile.size / (1024 * 1024)).toFixed(1)} MB
+                  </p>
+                  <p className="text-xs text-indigo-500 mt-2">클릭하여 파일 변경</p>
+                </div>
+              ) : (
+                <div>
+                  <div className="text-3xl mb-2">📁</div>
+                  <p className="text-sm font-medium text-gray-600">클릭하여 영상 파일 선택</p>
+                  <p className="text-xs text-gray-400 mt-1">mp4, mov, avi 등 영상 파일</p>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-4 py-3 rounded-xl">

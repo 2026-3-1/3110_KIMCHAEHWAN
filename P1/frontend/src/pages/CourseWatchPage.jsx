@@ -7,22 +7,6 @@ import { getEnrollmentsByStudent } from '../api/enrollments';
 const LEVEL_LABEL = { beginner: '입문', intermediate: '중급', advanced: '고급' };
 const STUDENT_ID = 1;
 
-function toEmbedUrl(url) {
-  if (!url) return null;
-  try {
-    const u = new URL(url);
-    if (u.hostname.includes('youtube.com')) {
-      const v = u.searchParams.get('v');
-      return v ? `https://www.youtube.com/embed/${v}?autoplay=1` : null;
-    }
-    if (u.hostname === 'youtu.be') {
-      return `https://www.youtube.com/embed${u.pathname}?autoplay=1`;
-    }
-  } catch {
-    return null;
-  }
-  return url;
-}
 
 function StarDisplay({ value }) {
   return (
@@ -73,7 +57,7 @@ export default function CourseWatchPage() {
 
   if (!course) return null;
 
-  const embedUrl = toEmbedUrl(course.videoUrl);
+  const videoUrl = course.videoUrl || null;
   const avgRating = reviews.length > 0
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
     : course.averageRating?.toFixed(1) ?? '-';
@@ -98,14 +82,13 @@ export default function CourseWatchPage() {
       <div className="flex flex-1 overflow-hidden">
         {/* 영상 영역 */}
         <main className="flex-1 flex flex-col bg-gray-50 min-w-0">
-          {embedUrl ? (
+          {videoUrl ? (
             <div className="w-full aspect-video bg-black">
-              <iframe
-                src={embedUrl}
-                title={course.title}
+              <video
+                src={videoUrl}
+                controls
+                autoPlay
                 className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
               />
             </div>
           ) : (
