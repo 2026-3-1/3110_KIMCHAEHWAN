@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getCourse, deleteCourse } from '../api/courses';
 import { getReviews, createReview } from '../api/reviews';
-import { createEnrollment } from '../api/enrollments';
+import { createEnrollment, getEnrollmentsByStudent } from '../api/enrollments';
 
 const LEVEL_LABEL = { beginner: '입문', intermediate: '중급', advanced: '고급' };
 const STUDENT_ID = 1;
@@ -77,10 +77,15 @@ export default function CourseDetailPage() {
     Promise.all([
       getCourse(id),
       getReviews(id),
+      getEnrollmentsByStudent(STUDENT_ID),
     ])
-      .then(([courseRes, reviewsRes]) => {
+      .then(([courseRes, reviewsRes, enrollmentsRes]) => {
         setCourse(courseRes.data.data);
         setReviews(reviewsRes.data.data);
+        const alreadyEnrolled = enrollmentsRes.data.data.some(
+          (e) => e.courseId === Number(id)
+        );
+        setEnrolled(alreadyEnrolled);
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false));
@@ -324,7 +329,12 @@ export default function CourseDetailPage() {
             </button>
 
             {enrolled && (
-              <p className="text-center text-sm text-green-600 mt-2">내 수강 목록에서 확인하세요.</p>
+              <Link
+                to={`/courses/${course.id}/watch`}
+                className="block mt-3 w-full text-center bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold transition-colors"
+              >
+                강의 시청하기 →
+              </Link>
             )}
 
             <div className="border-t border-gray-100 mt-5 pt-5 space-y-2">

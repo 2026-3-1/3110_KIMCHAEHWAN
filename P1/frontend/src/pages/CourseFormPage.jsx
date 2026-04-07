@@ -10,7 +10,7 @@ const LEVELS = [
 ];
 const EMPTY = {
   title: '', summary: '', description: '',
-  category: CATEGORIES[0], level: 'beginner', price: '', thumbnailUrl: '',
+  category: CATEGORIES[0], level: 'beginner', price: '', thumbnailUrl: '', videoUrl: '',
 };
 const INSTRUCTOR_ID = 1;
 const INSTRUCTOR_NAME = '강사';
@@ -179,6 +179,17 @@ export default function CourseFormPage() {
               <p className="text-center text-xs text-gray-400 py-2">썸네일 미리보기</p>
             </div>
           )}
+        </div>
+
+        {/* 영상 URL */}
+        <div>
+          <label className="block text-sm font-semibold text-gray-700 mb-1.5">영상 URL</label>
+          <input
+            value={form.videoUrl}
+            onChange={set('videoUrl')}
+            placeholder="https://www.youtube.com/watch?v=..."
+            className="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-400 transition"
+          />
         </div>
 
         {error && (

@@ -14,4 +14,5 @@ public class CourseCreateRequest {
     private String level;
     private int price;
     private String thumbnailUrl;
+    private String videoUrl;
 }

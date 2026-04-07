@@ -13,4 +13,5 @@ public class CourseUpdateRequest {
     private String level;
     private Integer price;
     private String thumbnailUrl;
+    private String videoUrl;
 }

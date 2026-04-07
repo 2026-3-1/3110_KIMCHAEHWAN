@@ -23,7 +23,7 @@ public class CourseService {
     private final CourseRepository courseRepository;
 
     @Transactional
-    public CourseResponse create(CourseCreateRequest request) {
+    public CourseResponse create(CourseCreateRequest request, String videoUrl) {
         Course course = Course.builder()
                 .instructorId(request.getInstructorId())
                 .instructorName(request.getInstructorName())
@@ -34,6 +34,7 @@ public class CourseService {
                 .level(request.getLevel())
                 .price(request.getPrice())
                 .thumbnailUrl(request.getThumbnailUrl())
+                .videoUrl(videoUrl)
                 .build();
 
         return CourseResponse.from(courseRepository.save(course));
@@ -77,7 +78,7 @@ public class CourseService {
         }
 
         course.update(request.getTitle(), request.getSummary(), request.getDescription(),
-                request.getCategory(), request.getLevel(), request.getPrice(), request.getThumbnailUrl());
+                request.getCategory(), request.getLevel(), request.getPrice(), request.getThumbnailUrl(), request.getVideoUrl());
 
         return CourseResponse.from(course);
     }

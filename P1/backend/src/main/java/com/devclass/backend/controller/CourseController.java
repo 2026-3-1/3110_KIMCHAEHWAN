@@ -6,12 +6,15 @@ import com.devclass.backend.dto.CourseListResponse;
 import com.devclass.backend.dto.CourseResponse;
 import com.devclass.backend.dto.CourseUpdateRequest;
 import com.devclass.backend.service.CourseService;
+import com.devclass.backend.service.VideoStorageService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/courses")
@@ -20,12 +23,17 @@ import org.springframework.web.bind.annotation.*;
 public class CourseController {
 
     private final CourseService courseService;
+    private final VideoStorageService videoStorageService;
 
-    @PostMapping
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "강의 등록")
-    public ResponseEntity<ApiResponse<CourseResponse>> create(@RequestBody CourseCreateRequest request) {
+    public ResponseEntity<ApiResponse<CourseResponse>> create(
+            @RequestPart("data") CourseCreateRequest request,
+            @RequestPart(value = "video", required = false) MultipartFile video
+    ) {
+        String videoUrl = (video != null && !video.isEmpty()) ? videoStorageService.store(video) : null;
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success(courseService.create(request)));
+                .body(ApiResponse.success(courseService.create(request, videoUrl)));
     }
 
     @GetMapping

@@ -20,6 +20,7 @@ public class CourseResponse {
     private String level;
     private int price;
     private String thumbnailUrl;
+    private String videoUrl;
     private float averageRating;
     private int enrollmentCount;
     private LocalDateTime createdAt;
@@ -37,6 +38,7 @@ public class CourseResponse {
                 .level(course.getLevel())
                 .price(course.getPrice())
                 .thumbnailUrl(course.getThumbnailUrl())
+                .videoUrl(course.getVideoUrl())
                 .averageRating(course.getAverageRating())
                 .enrollmentCount(course.getEnrollmentCount())
                 .createdAt(course.getCreatedAt())

@@ -44,6 +44,9 @@ public class Course {
     @Column(name = "thumbnail_url", length = 500)
     private String thumbnailUrl;
 
+    @Column(name = "video_url", length = 500)
+    private String videoUrl;
+
     @Builder.Default
     @Column(name = "average_rating", nullable = false)
     private float averageRating = 0.0f;
@@ -69,7 +72,7 @@ public class Course {
         updatedAt = LocalDateTime.now();
     }
 
-    public void update(String title, String summary, String description, String category, String level, Integer price, String thumbnailUrl) {
+    public void update(String title, String summary, String description, String category, String level, Integer price, String thumbnailUrl, String videoUrl) {
         if (title != null) this.title = title;
         if (summary != null) this.summary = summary;
         if (description != null) this.description = description;
@@ -77,6 +80,7 @@ public class Course {
         if (level != null) this.level = level;
         if (price != null) this.price = price;
         if (thumbnailUrl != null) this.thumbnailUrl = thumbnailUrl;
+        if (videoUrl != null) this.videoUrl = videoUrl;
     }
 
     public void incrementEnrollmentCount() {

@@ -5,11 +5,13 @@ import CourseListPage from './pages/CourseListPage';
 import CourseDetailPage from './pages/CourseDetailPage';
 import CourseFormPage from './pages/CourseFormPage';
 import MyCoursesPage from './pages/MyCoursesPage';
+import CourseWatchPage from './pages/CourseWatchPage';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/courses/:id/watch" element={<CourseWatchPage />} />
         <Route element={<Layout />}>
           <Route path="/" element={<MainPage />} />
           <Route path="/courses" element={<CourseListPage />} />
