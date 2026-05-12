@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: backend
+  datasource:
+    url: jdbc:mysql://mysql-375dce76-ccapstonee.d.aivencloud.com:27160/defaultdb?createDatabaseIfNotExist=true&useSSL=true&requireSSL=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: avnadmin
+    password: AVNS_qSAGktOblET2AEUV9d4
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
+app:
+  upload:
+    dir: uploads/videos
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+server:
+  port: 8081

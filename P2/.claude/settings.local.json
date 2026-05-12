@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./gradlew compileJava)",
+      "Bash(dir \"C:\\\\Program Files\\\\Java\")",
+      "Skill(update-config)",
+      "PowerShell([System.Environment]::GetEnvironmentVariable\\(\"JAVA_HOME\", \"Machine\"\\))",
+      "PowerShell(Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/c\", \"cd /d D:\\\\git_box\\\\ungga\\\\3110_KIMCHAEHWAN\\\\P2\\\\backend && gradlew.bat bootRun > server.log 2>&1\" -WorkingDirectory \"D:\\\\git_box\\\\ungga\\\\3110_KIMCHAEHWAN\\\\P2\\\\backend\" -WindowStyle Hidden)",
+      "PowerShell(Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/c D:\\\\git_box\\\\ungga\\\\3110_KIMCHAEHWAN\\\\P2\\\\backend\\\\gradlew.bat bootRun > D:\\\\git_box\\\\ungga\\\\3110_KIMCHAEHWAN\\\\P2\\\\backend\\\\server.log 2>&1\" -WorkingDirectory \"D:\\\\git_box\\\\ungga\\\\3110_KIMCHAEHWAN\\\\P2\\\\backend\" -WindowStyle Hidden)"
+    ]
+  }
+}
