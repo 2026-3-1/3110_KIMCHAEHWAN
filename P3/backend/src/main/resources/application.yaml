@@ -1,0 +1,94 @@
+spring:
+  application:
+    name: backend
+  datasource:
+    url: jdbc:mysql://mysql-375dce76-ccapstonee.d.aivencloud.com:27160/defaultdb?createDatabaseIfNotExist=true&useSSL=true&requireSSL=true&serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: avnadmin
+    password: AVNS_qSAGktOblET2AEUV9d4
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 30000
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME:gumrak54@gmail.com}
+    password: ${MAIL_PASSWORD:rgwq gxwi xght btnl}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=300s
+
+app:
+  upload:
+    dir: uploads/videos
+  jwt:
+    secret: ${JWT_SECRET:devclass-secret-key-must-be-at-least-256-bits-long-for-hs256-algorithm-ok}
+    expiration: 86400000
+  discord:
+    admin-webhook-url: ${DISCORD_ADMIN_WEBHOOK_URL:}
+  toss:
+    secret-key: ${TOSS_SECRET_KEY:test_sk_ORzdMaqN3wy4ojNgkalBr5AkYXQG}
+    client-key: ${TOSS_CLIENT_KEY:test_ck_24xLea5zVAEgjvopZ1B6VQAMYNwW}
+  webhook:
+    secret: ${WEBHOOK_SECRET:devclass-webhook-secret}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:5173}
+  admin:
+    code: ${ADMIN_CODE:devclass-admin-2025}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,loggers
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: devclass
+
+server:
+  port: 8081
+  error:
+    include-message: never
+    include-stacktrace: never
+
+logging:
+  level:
+    com.devclass: INFO
+    org.hibernate.SQL: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{requestId}] %logger{36} - %msg%n"
