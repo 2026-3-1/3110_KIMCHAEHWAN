@@ -49,6 +49,7 @@ export default function MyCoursesPage() {
   const [refundConfirm, setRefundConfirm] = useState(null); // enrollment object
   const [cancelConfirm, setCancelConfirm] = useState(null);
   const [cancelledMsg, setCancelledMsg] = useState('');
+  const [refunding, setRefunding] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -95,6 +96,8 @@ export default function MyCoursesPage() {
   }, [user]);
 
   const handleRefund = (enrollment) => {
+    if (refunding) return;
+    setRefunding(true);
     requestRefund(user.id, enrollment.course.id)
       .then(() => {
         setEnrollments((prev) => prev.filter((e) => e.id !== enrollment.id));
@@ -105,7 +108,8 @@ export default function MyCoursesPage() {
       .catch((err) => {
         setRefundConfirm(null);
         alert(err.response?.data?.message ?? '환불에 실패했습니다.');
-      });
+      })
+      .finally(() => setRefunding(false));
   };
 
   const handleCancel = (enrollmentId) => {
@@ -302,9 +306,10 @@ export default function MyCoursesPage() {
               </button>
               <button
                 onClick={() => handleRefund(refundConfirm)}
-                className="flex-1 bg-orange-500 text-white py-3 rounded-xl text-sm font-bold hover:bg-orange-600 transition-colors"
+                disabled={refunding}
+                className="flex-1 bg-orange-500 text-white py-3 rounded-xl text-sm font-bold hover:bg-orange-600 transition-colors disabled:opacity-50"
               >
-                환불 요청
+                {refunding ? '처리 중...' : '환불 요청'}
               </button>
             </div>
           </div>

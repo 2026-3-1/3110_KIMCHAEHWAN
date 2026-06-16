@@ -148,7 +148,7 @@ public class RefundService {
             log.info("[Refund] Toss cancel success paymentKey={}", paymentKey);
         } catch (Exception e) {
             log.error("[Refund] Toss cancel failed: {}", e.getMessage());
-            throw new BusinessException(ErrorCode.INVALID_INPUT);
+            throw new BusinessException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
 }
