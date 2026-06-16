@@ -524,6 +524,12 @@ export default function CourseDetailPage() {
                 >
                   수강생 현황 보기
                 </Link>
+                <Link
+                  to={`/courses/${course.id}/qna`}
+                  className="block w-full text-center border border-indigo-300 text-indigo-600 py-2.5 rounded-xl text-sm font-semibold hover:bg-indigo-50 transition-colors"
+                >
+                  Q&A 보기
+                </Link>
                 <div className="flex gap-2">
                   <Link
                     to={`/courses/${course.id}/edit`}
